@@ -1,5 +1,6 @@
-const { Resena, Usuario } = require('../models');
+const { Resena, Usuario, Producto } = require('../models');
 
+// Obtener reseñas de un producto
 exports.obtenerResenasProducto = async (req, res) => {
   try {
     const productoId = req.params.id;
@@ -17,20 +18,32 @@ exports.obtenerResenasProducto = async (req, res) => {
   }
 };
 
+// Crear reseña de un producto
 exports.crearResena = async (req, res) => {
   try {
     const productoId = req.params.id;
     const { comentario, puntaje } = req.body;
-    const usuarioQueCalificaId = req.user.id; // obtenido del token
+    const usuarioQueCalificaId = req.usuario.id; // 👈 corregido según tu middleware
 
+    // Verificamos que el producto exista
+    const producto = await Producto.findByPk(productoId);
+    if (!producto) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    // usuarioCalificadoId = dueño del producto
+    const usuarioCalificadoId = producto.usuarioId;
+
+    // Creamos la reseña
     const nuevaResena = await Resena.create({
       comentario,
       puntaje,
       usuarioQueCalificaId,
-      usuarioCalificadoId: req.body.usuarioCalificadoId, // o lo calculás según el producto
+      usuarioCalificadoId,
       productoId
     });
 
+    // Incluimos datos del usuario que calificó
     const resenaConUsuario = await Resena.findByPk(nuevaResena.id, {
       include: [
         { model: Usuario, as: 'UsuarioQueCalifica', attributes: ['id', 'nombre'] }

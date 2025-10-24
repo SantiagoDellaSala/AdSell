@@ -1,4 +1,3 @@
-// frontend/src/pages/ProductDetail.jsx
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -24,25 +23,31 @@ function ProductDetail() {
   const [error, setError] = useState('');
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [nuevoPuntaje, setNuevoPuntaje] = useState(5);
+  const [mensaje, setMensaje] = useState('');
 
-  const token = localStorage.getItem('token'); // Si el usuario está logueado
+  const token = localStorage.getItem('token');
 
+  // Cargar producto y reseñas
   useEffect(() => {
-  const fetchProductoYResenas = async () => {
-    try {
-      const resProducto = await axios.get(`http://localhost:3000/api/productos/${id}`);
-      setProducto(resProducto.data);
-      setReseñas(resProducto.data.Resenas || []);
-    } catch (err) {
-      console.error(err);
-      setError('No se pudo cargar el producto o las reseñas.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchProductoYResenas();
-}, [id]);
+    const fetchData = async () => {
+      try {
+        const [resProducto, resResenas] = await Promise.all([
+          axios.get(`http://localhost:3000/api/productos/${id}`),
+          axios.get(`http://localhost:3000/api/resenas/producto/${id}`)
+        ]);
+        setProducto(resProducto.data);
+        setReseñas(resResenas.data);
+      } catch (err) {
+        console.error(err);
+        setError('No se pudo cargar el producto o las reseñas.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
+  // Enviar reseña nueva
   const handleAgregarResena = async (e) => {
     e.preventDefault();
     if (!token) return alert('Debes estar logueado para dejar una reseña.');
@@ -50,18 +55,18 @@ function ProductDetail() {
     try {
       const res = await axios.post(
         `http://localhost:3000/api/resenas/producto/${id}`,
-        {
-          comentario: nuevoComentario,
-          puntaje: nuevoPuntaje
-        },
+        { comentario: nuevoComentario, puntaje: nuevoPuntaje },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setReseñas([...reseñas, res.data]);
+
+      setReseñas([res.data, ...reseñas]); // Se agrega al inicio
       setNuevoComentario('');
       setNuevoPuntaje(5);
+      setMensaje('Reseña agregada correctamente ✅');
+      setTimeout(() => setMensaje(''), 3000);
     } catch (err) {
       console.error(err);
-      alert('Error al agregar reseña');
+      setMensaje('Error al agregar reseña ❌');
     }
   };
 
@@ -125,21 +130,35 @@ function ProductDetail() {
             {/* Reseñas */}
             <div className="mt-5">
               <h4>Reseñas</h4>
-              {reseñas.length === 0 && <p>Aún no hay reseñas para este producto.</p>}
+              {reseñas.length === 0 && (
+                <p className="text-muted">Aún no hay reseñas para este producto.</p>
+              )}
               {reseñas.map((r) => (
-                <Card key={r.id} className="mb-2 shadow-sm">
-                  <Card.Body>
-                    <div className="d-flex align-items-center mb-1">
-                      {Array.from({ length: r.puntaje }).map((_, i) => (
-                        <FaStar key={i} className="text-warning me-1" />
-                      ))}
-                      <strong>{r.usuarioQueCalifica?.nombre || 'Anónimo'}</strong>
-                    </div>
-                    <p>{r.comentario}</p>
-                  </Card.Body>
-                </Card>
+                <motion.div
+                  key={r.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card className="mb-2 shadow-sm">
+                    <Card.Body>
+                      <div className="d-flex align-items-center mb-1">
+                        {Array.from({ length: r.puntaje }).map((_, i) => (
+                          <FaStar key={i} className="text-warning me-1" />
+                        ))}
+                        <strong className="ms-2">
+                          {r.UsuarioQueCalifica?.nombre || 'Anónimo'}
+                        </strong>
+                      </div>
+                      <p>{r.comentario}</p>
+                    </Card.Body>
+                  </Card>
+                </motion.div>
               ))}
             </div>
+
+            {/* Mensaje de feedback */}
+            {mensaje && <Alert variant="info" className="mt-3">{mensaje}</Alert>}
 
             {/* Formulario para nueva reseña */}
             {token && (
