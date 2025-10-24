@@ -1,4 +1,3 @@
-// frontend/src/components/Layout/Header.jsx
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaShoppingCart, FaUser } from 'react-icons/fa';
@@ -22,6 +21,7 @@ function Header() {
             <Nav.Link as={Link} to="/"><FaShoppingCart /> Productos</Nav.Link>
             {!token && <Nav.Link as={Link} to="/login"><FaUser /> Login</Nav.Link>}
             {!token && <Nav.Link as={Link} to="/register"><FaUser /> Registro</Nav.Link>}
+            {token && <Nav.Link as={Link} to="/perfil"><FaUser /> Perfil</Nav.Link>}
             {token && <Button variant="outline-light" onClick={handleLogout}>Logout</Button>}
           </Nav>
         </Navbar.Collapse>

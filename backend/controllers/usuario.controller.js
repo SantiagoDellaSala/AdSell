@@ -47,6 +47,19 @@ exports.actualizarUsuario = async (req, res) => {
   }
 };
 
+// Obtener usuario logueado
+exports.obtenerMiPerfil = async (req, res) => {
+  try {
+    const usuario = await Usuario.findByPk(req.usuario.id, {
+      attributes: ['id', 'nombre', 'email', 'telefono', 'rol']
+    });
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json(usuario);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Eliminar usuario
 exports.eliminarUsuario = async (req, res) => {
   try {
@@ -54,6 +67,18 @@ exports.eliminarUsuario = async (req, res) => {
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
     await usuario.destroy();
     res.json({ mensaje: 'Usuario eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Obtener usuario actual usando token
+exports.obtenerUsuarioActual = async (req, res) => {
+  try {
+    const usuarioId = req.usuario.id; // viene del authMiddleware
+    const usuario = await Usuario.findByPk(usuarioId);
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json(usuario);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

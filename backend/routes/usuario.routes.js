@@ -1,12 +1,18 @@
-// backend/routes/usuario.routes.js
 const express = require('express');
 const router = express.Router();
 const usuarioController = require('../controllers/usuario.controller');
+const authMiddleware = require('../middlewares/auth.middleware'); // 👈 requerimos auth
 
 router.post('/', usuarioController.crearUsuario);
 router.get('/', usuarioController.listarUsuarios);
-router.get('/:id', usuarioController.obtenerUsuario);
 router.put('/:id', usuarioController.actualizarUsuario);
 router.delete('/:id', usuarioController.eliminarUsuario);
+
+// NUEVO: obtener usuario actual
+router.get('/me', authMiddleware, usuarioController.obtenerUsuarioActual);
+
+// Obtener usuario por ID
+router.get('/:id', usuarioController.obtenerUsuario);
+
 
 module.exports = router;
