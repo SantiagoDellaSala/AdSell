@@ -24,8 +24,10 @@ function ProductDetail() {
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [nuevoPuntaje, setNuevoPuntaje] = useState(5);
   const [mensaje, setMensaje] = useState('');
+  const [reseñaExistenteId, setReseñaExistenteId] = useState(null);
 
   const token = localStorage.getItem('token');
+  const usuarioId = JSON.parse(atob(token.split('.')[1]))?.id; // obtener id desde JWT
 
   // Cargar producto y reseñas
   useEffect(() => {
@@ -37,6 +39,16 @@ function ProductDetail() {
         ]);
         setProducto(resProducto.data);
         setReseñas(resResenas.data);
+
+        // Verificar si el usuario ya dejó reseña
+        const existente = resResenas.data.find(
+          r => r.UsuarioQueCalifica?.id === usuarioId
+        );
+        if (existente) {
+          setReseñaExistenteId(existente.id);
+          setNuevoComentario(existente.comentario);
+          setNuevoPuntaje(existente.puntaje);
+        }
       } catch (err) {
         console.error(err);
         setError('No se pudo cargar el producto o las reseñas.');
@@ -45,28 +57,41 @@ function ProductDetail() {
       }
     };
     fetchData();
-  }, [id]);
+  }, [id, usuarioId]);
 
-  // Enviar reseña nueva
+  // Agregar o editar reseña
   const handleAgregarResena = async (e) => {
     e.preventDefault();
     if (!token) return alert('Debes estar logueado para dejar una reseña.');
 
     try {
-      const res = await axios.post(
-        `http://localhost:3000/api/resenas/producto/${id}`,
-        { comentario: nuevoComentario, puntaje: nuevoPuntaje },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setReseñas([res.data, ...reseñas]); // Se agrega al inicio
-      setNuevoComentario('');
-      setNuevoPuntaje(5);
-      setMensaje('Reseña agregada correctamente ✅');
+      let res;
+      if (reseñaExistenteId) {
+        // Editar reseña existente
+        res = await axios.put(
+          `http://localhost:3000/api/resenas/${reseñaExistenteId}`,
+          { comentario: nuevoComentario, puntaje: nuevoPuntaje },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setReseñas(prev =>
+          prev.map(r => (r.id === reseñaExistenteId ? res.data : r))
+        );
+        setMensaje('Reseña actualizada correctamente ✅');
+      } else {
+        // Crear nueva reseña
+        res = await axios.post(
+          `http://localhost:3000/api/resenas/producto/${id}`,
+          { comentario: nuevoComentario, puntaje: nuevoPuntaje },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setReseñas([res.data, ...reseñas]);
+        setReseñaExistenteId(res.data.id);
+        setMensaje('Reseña agregada correctamente ✅');
+      }
       setTimeout(() => setMensaje(''), 3000);
     } catch (err) {
       console.error(err);
-      setMensaje('Error al agregar reseña ❌');
+      setMensaje('Error al agregar/actualizar reseña ❌');
     }
   };
 
@@ -163,7 +188,7 @@ function ProductDetail() {
             {/* Formulario para nueva reseña */}
             {token && (
               <Form className="mt-4" onSubmit={handleAgregarResena}>
-                <h5>Dejar una reseña</h5>
+                <h5>{reseñaExistenteId ? 'Editar tu reseña' : 'Dejar una reseña'}</h5>
                 <Form.Group className="mb-2">
                   <Form.Label>Puntaje</Form.Label>
                   <Form.Select
@@ -188,7 +213,7 @@ function ProductDetail() {
                   />
                 </Form.Group>
                 <Button type="submit" variant="success">
-                  Enviar reseña
+                  {reseñaExistenteId ? 'Actualizar reseña' : 'Enviar reseña'}
                 </Button>
               </Form>
             )}
