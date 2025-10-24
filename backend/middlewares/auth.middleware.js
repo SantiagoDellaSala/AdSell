@@ -1,3 +1,4 @@
+//backend/middlewares/auth.middleware.js
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_ad_sell';
 

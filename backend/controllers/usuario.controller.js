@@ -111,3 +111,23 @@ exports.subirVerificacion = async (req, res) => {
     res.status(500).json({ error: 'No se pudo actualizar la verificación' });
   }
 };
+
+exports.editarPerfil = async (req, res) => {
+  try {
+    const usuario = await Usuario.findByPk(req.usuario.id);
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const { nombre } = req.body;
+    const nuevaFoto = req.file ? req.file.path : usuario.fotoPerfil;
+
+    await usuario.update({
+      nombre: nombre || usuario.nombre,
+      fotoPerfil: nuevaFoto
+    });
+
+    res.json(usuario);
+  } catch (error) {
+    console.error('Error al editar perfil:', error);
+    res.status(500).json({ error: 'No se pudo actualizar el perfil' });
+  }
+};

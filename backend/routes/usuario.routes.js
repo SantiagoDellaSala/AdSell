@@ -1,9 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const usuarioController = require('../controllers/usuario.controller');
-const authMiddleware = require('../middlewares/auth.middleware'); // 👈 requerimos auth
+const authMiddleware = require('../middlewares/auth.middleware');
 const upload = require('../config/multer');
 
+// 🔹 Editar perfil del usuario autenticado (debe ir antes de rutas con /:id)
+router.put(
+  '/editar',
+  authMiddleware,
+  upload.single('fotoPerfil'),
+  usuarioController.editarPerfil
+);
+
+// 🔹 Verificación de usuario (subida de DNI y foto)
 router.put(
   '/verificacion',
   authMiddleware,
@@ -14,16 +23,12 @@ router.put(
   usuarioController.subirVerificacion
 );
 
+// CRUD y obtención de usuarios
 router.post('/', usuarioController.crearUsuario);
 router.get('/', usuarioController.listarUsuarios);
+router.get('/me', authMiddleware, usuarioController.obtenerUsuarioActual);
+router.get('/:id', usuarioController.obtenerUsuario);
 router.put('/:id', usuarioController.actualizarUsuario);
 router.delete('/:id', usuarioController.eliminarUsuario);
-
-// NUEVO: obtener usuario actual
-router.get('/me', authMiddleware, usuarioController.obtenerUsuarioActual);
-
-// Obtener usuario por ID
-router.get('/:id', usuarioController.obtenerUsuario);
-
 
 module.exports = router;
