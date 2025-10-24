@@ -1,6 +1,7 @@
 // backend/controllers/usuario.controller.js
 const { Usuario } = require('../models');
 const bcrypt = require('bcrypt');
+const upload = require('../config/multer');
 
 // Crear usuario
 exports.crearUsuario = async (req, res) => {
@@ -81,5 +82,32 @@ exports.obtenerUsuarioActual = async (req, res) => {
     res.json(usuario);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+exports.subirVerificacion = async (req, res) => {
+  try {
+    const usuario = await Usuario.findByPk(req.usuario.id);
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const { telefono } = req.body;
+    let fotoPerfil, dni;
+
+    if (req.files) {
+  if (req.files.fotoPerfil) fotoPerfil = 'uploads/' + req.files.fotoPerfil[0].filename;
+  if (req.files.dni) dni = 'uploads/' + req.files.dni[0].filename;
+}
+
+    await usuario.update({
+      telefono: telefono || usuario.telefono,
+      fotoPerfil: fotoPerfil || usuario.fotoPerfil,
+      dni: dni || usuario.dni,
+      verificado: !!(fotoPerfil && dni)
+    });
+
+    res.json(usuario);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'No se pudo actualizar la verificación' });
   }
 };

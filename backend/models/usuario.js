@@ -19,7 +19,12 @@ module.exports = (sequelize, DataTypes) => {
       telefono: { type: DataTypes.STRING },
       rol: { type: DataTypes.STRING, defaultValue: 'comprador' },
       verificado: { type: DataTypes.BOOLEAN, defaultValue: false },
-      reputacion: { type: DataTypes.FLOAT, defaultValue: 0 }
+      reputacion: { type: DataTypes.FLOAT, defaultValue: 0 },
+      fotoPerfil: { type: DataTypes.STRING },
+      dni: { type: DataTypes.STRING },
+      emailVerificado: { type: DataTypes.BOOLEAN, defaultValue: false },
+      telefonoVerificado: { type: DataTypes.BOOLEAN, defaultValue: false }
+
     },
     { sequelize, modelName: 'Usuario' }
   );
