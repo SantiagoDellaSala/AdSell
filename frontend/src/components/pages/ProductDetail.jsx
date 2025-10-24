@@ -28,22 +28,20 @@ function ProductDetail() {
   const token = localStorage.getItem('token'); // Si el usuario está logueado
 
   useEffect(() => {
-    const fetchProductoYResenas = async () => {
-      try {
-        const resProducto = await axios.get(`http://localhost:3000/api/productos/${id}`);
-        setProducto(resProducto.data);
-
-        const resResenas = await axios.get(`http://localhost:3000/api/resenas/producto/${id}`);
-        setReseñas(resResenas.data);
-      } catch (err) {
-        setError('No se pudo cargar el producto o las reseñas.');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProductoYResenas();
-  }, [id]);
+  const fetchProductoYResenas = async () => {
+    try {
+      const resProducto = await axios.get(`http://localhost:3000/api/productos/${id}`);
+      setProducto(resProducto.data);
+      setReseñas(resProducto.data.Resenas || []);
+    } catch (err) {
+      console.error(err);
+      setError('No se pudo cargar el producto o las reseñas.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchProductoYResenas();
+}, [id]);
 
   const handleAgregarResena = async (e) => {
     e.preventDefault();

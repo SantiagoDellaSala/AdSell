@@ -21,16 +21,37 @@ exports.listarProductos = async (req, res) => {
   }
 };
 
-// Obtener producto por ID
+// Obtener producto por ID (con reseñas y usuarios)
 exports.obtenerProducto = async (req, res) => {
   try {
-    const producto = await Producto.findByPk(req.params.id);
-    if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+    const { Producto, Resena, Usuario } = require('../models');
+
+    console.log("Buscando producto con ID:", req.params.id);
+
+    const producto = await Producto.findByPk(req.params.id, {
+      include: [
+        {
+          model: Resena,
+          include: [
+            { model: Usuario, as: 'UsuarioQueCalifica', attributes: ['id', 'nombre'] },
+            { model: Usuario, as: 'UsuarioCalificado', attributes: ['id', 'nombre'] }
+          ]
+        }
+      ]
+    });
+
+    if (!producto) {
+      console.log("No se encontró el producto en la base de datos.");
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
     res.json(producto);
   } catch (error) {
+    console.error('Error al obtener producto:', error);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Actualizar producto
 exports.actualizarProducto = async (req, res) => {
